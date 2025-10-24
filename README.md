@@ -2,35 +2,26 @@
 
 Complete MCP server for tracking brand visibility in LLMs (ChatGPT, Claude, Gemini, Perplexity).
 
+
 ## 🚀 Features
+### ✅ LLM Live Responses (4 tools)
 
-### Tier 1: Core Tools (Solve 80% of demand)
-- ✅ **search_mentions** - Find brand mentions across all LLMs
-- ✅ **ai_keyword_search_volume** - Get AI-specific search volume
-- ✅ **chatgpt_live** - Query ChatGPT with citations
-- ✅ **claude_live** - Query Claude with citations
-- ✅ **gemini_live** - Query Gemini with citations
+Query any LLM with citations in real-time:
 
-### Tier 2: High-Value Tools
-- ✅ **top_domains** - Competitor analysis
-- ✅ **aggregated_metrics** - Historical tracking
-- ✅ **perplexity_live** - Complete LLM coverage
-- ✅ **chatgpt_scraper_live** - Deep HTML extraction
-- ✅ **cross_aggregated_metrics** - Multi-domain comparison
+- **chatgpt_live** - ChatGPT (gpt-4o-mini, gpt-4o, gpt-4-turbo)
+- **claude_live** - Claude (claude-3-5-haiku, claude-3-5-sonnet)
+- **gemini_live** - Gemini (gemini-1.5-flash, gemini-1.5-pro)
+- **perplexity_live** - Perplexity (sonar, sonar-pro)
 
-### Tier 3: Power Features
-- ✅ **top_pages** - Content optimization insights
-- ✅ **list_chatgpt_models** - Available ChatGPT models
-- ✅ **list_claude_models** - Available Claude models
-- ✅ **list_gemini_models** - Available Gemini models
-- ✅ **list_perplexity_models** - Available Perplexity models
+### 🔒 LLM Mentions (6 tools)
 
-### Tier 4: Batch Operations
-- ✅ **chatgpt_task_post/ready/get** - Bulk ChatGPT queries
-- ✅ **claude_task_post/ready/get** - Bulk Claude queries
+- **search_mentions** - Find brand mentions across all LLMs
+- **top_domains** - Competitor analysis by domain
+- **top_pages** - Top-performing pages in LLM responses
+- **aggregated_metrics** - Historical tracking over time
+- **cross_aggregated_metrics** - Compare multiple domains side-by-side
 
-**Total: 21 production-ready tools**
-
+**Total: 10 focused, production-ready tools**
 ## 📋 Prerequisites
 
 - Python 3.10+
@@ -242,12 +233,16 @@ Issues? Check:
 
 MIT License - Use freely in your projects
 
-## 🎯 What Problems This Solves
+## 🙏 Credits
 
-1. ✅ **Brand Invisibility** - 43.4% of queries get zero mentions
-2. ✅ **Unknown AI Search Volume** - Traditional volume doesn't translate
-3. ✅ **Multi-LLM Chaos** - Different responses across LLMs
-4. ✅ **Competitor Blind Spots** - Can't measure Share of Voice
-5. ✅ **Citation Paradox** - High mentions ≠ website traffic
+Built for the SEO community by (https://github.com/chetanparma1)
 
-Built based on real market demand from SEO communities.
+Powered by [DataForSEO](https://dataforseo.com) API
+
+---
+
+**Questions?** Open an issue
+
+**Want to contribute?** PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+**Like this project?** ⭐ Star it on GitHub!            

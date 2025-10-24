@@ -230,7 +230,7 @@ async def claude_live(
 @mcp.tool()
 async def gemini_live(
     user_prompt: str,
-    model_name: str = "gemini-1.5-flash-latest",
+    model_name: str = "gemini-2.5-flash",
     max_output_tokens: int = 1000,
     temperature: float = 0.7
 ) -> dict:
@@ -336,7 +336,56 @@ async def perplexity_live(
     
     return result
 
+# ============================================================================
+# AI KEYWORD DATA (1 tool)
+# ============================================================================
 
+@mcp.tool()
+async def ai_keyword_volume(
+    keywords: list[str],
+    language_name: str = "English",
+    location_name: str = "United States"
+) -> dict:
+    """
+    Get AI search volume for keywords.
+    
+    Args:
+        keywords: List of keywords to check
+        language_name: Search language
+        location_name: Geographic location
+    
+    Returns:
+        Search volume data for each keyword in AI searches
+    """
+    logger.info(f"📊 AI keyword volume for {len(keywords)} keywords")
+    
+    payload = [{
+        "keywords": keywords,
+        "language_name": language_name,
+        "location_name": location_name
+    }]
+    
+    result = await make_request(
+        "/v3/ai_optimization/ai_keyword_data/live",
+        method="POST",
+        data=payload
+    )
+    
+    if result.get("tasks") and len(result["tasks"]) > 0:
+        task = result["tasks"][0]
+        task_result = task.get("result", [{}])[0]
+        
+        return {
+            "keywords": keywords,
+            "items": task_result.get("items", []),
+            "cost": task.get("cost", 0)
+        }
+    
+    return result
+# ===========================================================================
+# LLM MENTIONS (6 tools - equires activation)
+# ===========================================================================
+@mcp.tool()async def search_mentions(    # ... rest of the code
 # ============================================================================
 # LLM MENTIONS (6 tools - Requires activation)
 # ============================================================================
