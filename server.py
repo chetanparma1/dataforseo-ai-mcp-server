@@ -368,7 +368,7 @@ async def ai_keyword_volume(
     }]
     
     result = await make_request(
-        "/v3/ai_optimization/ai_keyword_data/live",
+        "/v3/ai_optimization/keywords_search_volume/live",
         method="POST",
         data=payload
     )
