@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dataforseo-mcp-server"
+version = "1.0.0"
+description = "MCP server for tracking brand visibility in LLMs (ChatGPT, Claude, Gemini, Perplexity) using DataForSEO API"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Chetan Parma", email = "chetanparma1@gmail.com"}
+]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "claude",
+    "chatgpt",
+    "llm",
+    "seo",
+    "dataforseo",
+    "brand-tracking",
+    "ai-optimization"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+dependencies = [
+    "fastmcp>=0.1.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/chetanparma1/dataforseo-ai-mcp-server"
+Documentation = "https://github.com/chetanparma1/dataforseo-ai-mcp-server#readme"
+Repository = "https://github.com/chetanparma1/dataforseo-ai-mcp-server"
+Issues = "https://github.com/chetanparma1/dataforseo-ai-mcp-server/issues"
+
+[tool.setuptools]
+py-modules = ["server", "test_auth"]
