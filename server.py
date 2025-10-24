@@ -1,10 +1,11 @@
 """
 DataForSEO AI Optimization MCP Server - LEAN VERSION
-10 essential tools with CORRECTED parameters
+11 essential tools with CORRECTED parameters
 
-✅ Fixed: "target" parameter for LLM Mentions (not "keyword")
-✅ 4 LLM live endpoints
-✅ 6 LLM Mentions endpoints
+Fixed: "target" parameter for LLM Mentions (not "keyword")
+4 LLM live endpoints
+1 AI Keyword Data endpoint
+6 LLM Mentions endpoints
 """
 
 import os
@@ -36,14 +37,14 @@ DATAFORSEO_PASSWORD = os.getenv("DATAFORSEO_PASSWORD")
 BASE_URL = "https://api.dataforseo.com"
 
 if not DATAFORSEO_LOGIN or not DATAFORSEO_PASSWORD:
-    raise ValueError("❌ DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD must be set in .env file")
+    raise ValueError("DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD must be set in .env file")
 
 # Create authentication header
 credentials = f"{DATAFORSEO_LOGIN}:{DATAFORSEO_PASSWORD}"
 encoded_credentials = base64.b64encode(credentials.encode()).decode()
 AUTH_HEADER = {"Authorization": f"Basic {encoded_credentials}"}
 
-logger.info("✅ DataForSEO credentials loaded")
+logger.info("DataForSEO credentials loaded")
 
 
 class DataForSEOError(Exception):
@@ -59,7 +60,7 @@ async def make_request(
     """Make authenticated request to DataForSEO API"""
     url = f"{BASE_URL}{endpoint}"
     
-    logger.info(f"📡 {method} {endpoint}")
+    logger.info(f"{method} {endpoint}")
     
     async with httpx.AsyncClient(timeout=120.0) as client:
         try:
@@ -79,7 +80,7 @@ async def make_request(
             api_status = result.get("status_code")
             if api_status != 20000:
                 error_msg = result.get("status_message", "Unknown error")
-                logger.error(f"❌ API Error {api_status}: {error_msg}")
+                logger.error(f"API Error {api_status}: {error_msg}")
                 raise DataForSEOError(f"API Error {api_status}: {error_msg}")
             
             # Check task-level status
@@ -100,16 +101,16 @@ async def make_request(
                         f"Task failed: {task_status} - {task.get('status_message')}"
                     )
             
-            logger.info(f"✅ Request successful")
+            logger.info(f"Request successful")
             return result
             
         except httpx.HTTPError as e:
-            logger.error(f"❌ HTTP Error: {str(e)}")
+            logger.error(f"HTTP Error: {str(e)}")
             raise DataForSEOError(f"HTTP request failed: {str(e)}")
         except DataForSEOError:
             raise
         except Exception as e:
-            logger.error(f"❌ Unexpected error: {str(e)}")
+            logger.error(f"Unexpected error: {str(e)}")
             raise DataForSEOError(f"Request failed: {str(e)}")
 
 
@@ -136,7 +137,7 @@ async def chatgpt_live(
     Returns:
         ChatGPT's answer with citations and cost
     """
-    logger.info(f"💬 ChatGPT: '{user_prompt[:50]}...'")
+    logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
@@ -191,7 +192,7 @@ async def claude_live(
     Returns:
         Claude's answer with citations and cost
     """
-    logger.info(f"💬 Claude: '{user_prompt[:50]}...'")
+    logger.info(f"Claude: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
@@ -230,7 +231,7 @@ async def claude_live(
 @mcp.tool()
 async def gemini_live(
     user_prompt: str,
-    model_name: str = "gemini-2.5-flash",
+    model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1000,
     temperature: float = 0.7
 ) -> dict:
@@ -239,14 +240,14 @@ async def gemini_live(
     
     Args:
         user_prompt: Your question or prompt
-        model_name: gemini-1.5-flash-latest, gemini-1.5-pro-latest
+        model_name: gemini-1.5-flash, gemini-1.5-pro, gemini-2.5-flash
         max_output_tokens: Max response length (100-4000)
         temperature: Creativity level (0.0-1.0)
     
     Returns:
         Gemini's answer with citations and cost
     """
-    logger.info(f"💬 Gemini: '{user_prompt[:50]}...'")
+    logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
@@ -301,7 +302,7 @@ async def perplexity_live(
     Returns:
         Perplexity's answer with citations and cost
     """
-    logger.info(f"💬 Perplexity: '{user_prompt[:50]}...'")
+    logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
@@ -336,6 +337,7 @@ async def perplexity_live(
     
     return result
 
+
 # ============================================================================
 # AI KEYWORD DATA (1 tool)
 # ============================================================================
@@ -357,7 +359,7 @@ async def ai_keyword_volume(
     Returns:
         Search volume data for each keyword in AI searches
     """
-    logger.info(f"📊 AI keyword volume for {len(keywords)} keywords")
+    logger.info(f"AI keyword volume for {len(keywords)} keywords")
     
     payload = [{
         "keywords": keywords,
@@ -382,10 +384,8 @@ async def ai_keyword_volume(
         }
     
     return result
-# ===========================================================================
-# LLM MENTIONS (6 tools - equires activation)
-# ===========================================================================
-@mcp.tool()async def search_mentions(    # ... rest of the code
+
+
 # ============================================================================
 # LLM MENTIONS (6 tools - Requires activation)
 # ============================================================================
@@ -399,7 +399,7 @@ async def search_mentions(
     """
     Search for brand/keyword mentions across all LLMs.
     
-    🔒 Requires LLM Mentions API access
+    Requires LLM Mentions API access
     
     Args:
         target: Brand name, keyword, or domain to search
@@ -409,10 +409,10 @@ async def search_mentions(
     Returns:
         List of mentions across ChatGPT, Claude, Gemini, Perplexity
     """
-    logger.info(f"🔍 Searching mentions: {target}")
+    logger.info(f"Searching mentions: {target}")
     
     payload = [{
-        "target": target,  # ✅ CORRECTED: was "keyword"
+        "target": target,
         "language_name": language_name,
         "location_name": location_name
     }]
@@ -446,7 +446,7 @@ async def top_domains(
     """
     Get top domains mentioned by LLMs for a keyword (competitor analysis).
     
-    🔒 Requires LLM Mentions API access
+    Requires LLM Mentions API access
     
     Args:
         target: Keyword or topic to analyze
@@ -456,10 +456,10 @@ async def top_domains(
     Returns:
         List of top domains mentioned by LLMs
     """
-    logger.info(f"🏆 Top domains for: {target}")
+    logger.info(f"Top domains for: {target}")
     
     payload = [{
-        "target": target,  # ✅ CORRECTED: was "keyword"
+        "target": target,
         "language_name": language_name,
         "location_name": location_name
     }]
@@ -491,7 +491,7 @@ async def top_pages(
     """
     Get top-performing pages from a domain in LLM responses.
     
-    🔒 Requires LLM Mentions API access
+    Requires LLM Mentions API access
     
     Args:
         target: Domain (e.g., "semrush.com")
@@ -499,7 +499,7 @@ async def top_pages(
     Returns:
         List of top pages mentioned by LLMs
     """
-    logger.info(f"📄 Top pages: {target}")
+    logger.info(f"Top pages: {target}")
     
     payload = [{
         "target": target
@@ -535,7 +535,7 @@ async def aggregated_metrics(
     """
     Get historical metrics for a domain or page.
     
-    🔒 Requires LLM Mentions API access
+    Requires LLM Mentions API access
     
     Args:
         target: Domain (e.g., "semrush.com") or page URL
@@ -546,7 +546,7 @@ async def aggregated_metrics(
     Returns:
         Historical metrics showing trends over time
     """
-    logger.info(f"📊 Aggregated metrics: {target}")
+    logger.info(f"Aggregated metrics: {target}")
     
     payload = [{
         "target": target,
@@ -585,7 +585,7 @@ async def cross_aggregated_metrics(
     """
     Compare multiple domains/pages side-by-side.
     
-    🔒 Requires LLM Mentions API access
+    Requires LLM Mentions API access
     
     Args:
         targets: List of domains or page URLs to compare
@@ -594,7 +594,7 @@ async def cross_aggregated_metrics(
     Returns:
         Comparative metrics for all targets
     """
-    logger.info(f"⚖️  Comparing {len(targets)} targets")
+    logger.info(f"Comparing {len(targets)} targets")
     
     payload = [{
         "targets": targets,
@@ -626,18 +626,21 @@ async def cross_aggregated_metrics(
 
 if __name__ == "__main__":
     logger.info("=" * 80)
-    logger.info("🚀 DataForSEO AI Optimization MCP Server (LEAN)")
+    logger.info("DataForSEO AI Optimization MCP Server")
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
-    logger.info("✅ LLM Live Responses (4 tools):")
+    logger.info("LLM Live Responses (4 tools):")
     logger.info("   chatgpt_live, claude_live, gemini_live, perplexity_live")
     logger.info("")
-    logger.info("🔒 LLM Mentions (6 tools - requires activation):")
+    logger.info("AI Keyword Data (1 tool):")
+    logger.info("   ai_keyword_volume")
+    logger.info("")
+    logger.info("LLM Mentions (6 tools - requires activation):")
     logger.info("   search_mentions, top_domains, top_pages")
     logger.info("   aggregated_metrics, cross_aggregated_metrics")
     logger.info("")
-    logger.info("🎯 Total: 10 focused tools (no redundancy)")
+    logger.info("Total: 11 tools")
     logger.info("=" * 80)
     
     mcp.run()
