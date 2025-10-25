@@ -1,6 +1,6 @@
 """
 DataForSEO AI Optimization MCP Server - PRODUCTION
-Tool names: chatgpt_llm_response, claude_llm_response, etc.
+Citations extracted correctly from all LLMs
 """
 
 import os
@@ -109,7 +109,7 @@ async def make_request(
 
 
 def format_llm_response(task_result: dict, task: dict) -> dict:
-    """Minimal format: Answer → Citations → Metadata"""
+    """Format LLM response with citations extracted correctly"""
     items = task_result.get("items", [])
     
     answer_text = ""
@@ -117,25 +117,56 @@ def format_llm_response(task_result: dict, task: dict) -> dict:
     
     if items:
         item = items[0]
+        
+        # Get answer text and citations from sections
         if item.get("sections"):
-            answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-        if item.get("annotations"):
+            for section in item["sections"]:
+                # Add text from this section
+                answer_text += section.get("text", "")
+                
+                # Extract citations from THIS section's annotations
+                if section.get("annotations"):
+                    citations.extend(section.get("annotations", []))
+        
+        # Fallback: check top-level annotations if no citations found
+        if item.get("annotations") and not citations:
             citations = item.get("annotations", [])
     
-    # Minimal formatting
+    # Build formatted response
     formatted_response = answer_text
     
-    # Simple citations
+    # Add citations section
     if citations:
-        formatted_response += "\n\n------\nCitations:\n"
-        for i, citation in enumerate(citations, 1):
-            formatted_response += f"{i}. {citation.get('title', 'Source')}\n   {citation.get('url', '')}\n"
+        formatted_response += "\n\n" + "=" * 70
+        formatted_response += "\nCITATIONS:"
+        formatted_response += "\n" + "=" * 70 + "\n"
+        
+        # Remove duplicate citations
+        seen_urls = set()
+        unique_citations = []
+        for citation in citations:
+            url = citation.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                unique_citations.append(citation)
+        
+        for i, citation in enumerate(unique_citations, 1):
+            title = citation.get("title", "Source")
+            url = citation.get("url", "")
+            formatted_response += f"\n[{i}] {title}\n    {url}\n"
     
-    # Simple metadata
-    formatted_response += "\n----\nRESPONSE METADATA:\n"
+    # Add metadata section  
+    formatted_response += "\n" + "=" * 70
+    formatted_response += "\nRESPONSE METADATA:"
+    formatted_response += "\n" + "=" * 70 + "\n"
     formatted_response += f"Model: {task_result.get('model_name')}\n"
     formatted_response += f"Tokens: {task_result.get('input_tokens', 0):,} in / {task_result.get('output_tokens', 0):,} out\n"
-    formatted_response += f"Cost: ${task.get('cost', 0):.6f}\n"
+    formatted_response += f"Web Search: {'Yes' if task_result.get('web_search') else 'No'}\n"
+    formatted_response += f"AI Cost: ${task_result.get('money_spent', 0):.6f}\n"
+    formatted_response += f"DataForSEO Cost: ${task.get('cost', 0):.6f}\n"
+    formatted_response += f"Total Cost: ${task.get('cost', 0):.6f}\n"
+    formatted_response += f"Generated: {task_result.get('datetime')}\n"
+    formatted_response += "=" * 70
     
     return {
         "response": formatted_response,
@@ -238,7 +269,7 @@ async def perplexity_models() -> dict:
 
 
 # ============================================================================
-# LLM LIVE RESPONSES (4 tools) - RENAMED
+# LLM LIVE RESPONSES (4 tools)
 # ============================================================================
 
 @mcp.tool()
@@ -603,11 +634,11 @@ if __name__ == "__main__":
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
-    logger.info("LLM Response Tools (4):")
-    logger.info("   chatgpt_llm_response, claude_llm_response")
-    logger.info("   gemini_llm_response, perplexity_llm_response")
+    logger.info("✅ Citations extracted correctly from all LLMs")
+    logger.info("✅ Duplicate citations removed")
+    logger.info("✅ Complete metadata included")
     logger.info("")
-    logger.info("Total: 15 tools | 67 models | Minimal format")
+    logger.info("Total: 15 tools | 67 models")
     logger.info("=" * 80)
     
     mcp.run()
