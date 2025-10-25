@@ -114,9 +114,9 @@ async def make_request(
             raise DataForSEOError(f"Request failed: {str(e)}")
 
 
-# ============================================================================
+# ================================================================================
 # LLM LIVE RESPONSES (4 tools)
-# ============================================================================
+# ================================================================================
 
 @mcp.tool()
 async def chatgpt_live(
@@ -338,9 +338,9 @@ async def perplexity_live(
     return result
 
 
-# ============================================================================
+# ================================================================================
 # AI KEYWORD DATA (1 tool)
-# ============================================================================
+# ================================================================================
 
 @mcp.tool()
 async def ai_keyword_volume(
@@ -368,7 +368,7 @@ async def ai_keyword_volume(
     }]
     
     result = await make_request(
-        "/v3/ai_optimization/keywords_search_volume/live",
+        "/v3/ai_optimization/ai_keyword_data/keywords_search_volume/live",
         method="POST",
         data=payload
     )
@@ -386,9 +386,9 @@ async def ai_keyword_volume(
     return result
 
 
-# ============================================================================
-# LLM MENTIONS (6 tools - Requires activation)
-# ============================================================================
+# ================================================================================
+# LLM MENTIONS (6 tools - requires activation)
+# ================================================================================
 
 @mcp.tool()
 async def search_mentions(
@@ -620,9 +620,9 @@ async def cross_aggregated_metrics(
     return result
 
 
-# ============================================================================
+# ================================================================================
 # SERVER STARTUP
-# ============================================================================
+# ================================================================================
 
 if __name__ == "__main__":
     logger.info("=" * 80)
@@ -631,14 +631,14 @@ if __name__ == "__main__":
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
     logger.info("LLM Live Responses (4 tools):")
-    logger.info("   chatgpt_live, claude_live, gemini_live, perplexity_live")
+    logger.info("  chatgpt_live, claude_live, gemini_live, perplexity_live")
     logger.info("")
     logger.info("AI Keyword Data (1 tool):")
-    logger.info("   ai_keyword_volume")
+    logger.info("  ai_keyword_volume")
     logger.info("")
     logger.info("LLM Mentions (6 tools - requires activation):")
-    logger.info("   search_mentions, top_domains, top_pages")
-    logger.info("   aggregated_metrics, cross_aggregated_metrics")
+    logger.info("  search_mentions, top_domains, top_pages")
+    logger.info("  aggregated_metrics, cross_aggregated_metrics")
     logger.info("")
     logger.info("Total: 11 tools")
     logger.info("=" * 80)
