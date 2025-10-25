@@ -1,8 +1,6 @@
 """
-DataForSEO AI Optimization MCP Server - PRODUCTION READY
-- Web search enabled by default for citations
-- Language and location customizable
-- Latest models: GPT-5, Claude 4, Gemini 2.5 Pro, Sonar Reasoning Pro
+DataForSEO AI Optimization MCP Server - PRODUCTION
+Citations and metadata embedded in response for full visibility
 """
 
 import os
@@ -110,6 +108,63 @@ async def make_request(
             raise DataForSEOError(f"Request failed: {str(e)}")
 
 
+def format_llm_response(task_result: dict, task: dict) -> dict:
+    """Format LLM response with embedded citations and metadata"""
+    items = task_result.get("items", [])
+    
+    answer_text = ""
+    citations = []
+    
+    if items:
+        item = items[0]
+        if item.get("sections"):
+            answer_text = " ".join([s.get("text", "") for s in item["sections"]])
+        if item.get("annotations"):
+            citations = item.get("annotations", [])
+    
+    # Build formatted response with all metadata
+    formatted_response = answer_text
+    
+    # Add citations
+    if citations:
+        formatted_response += "\n\n" + "="*60 + "\n"
+        formatted_response += "📚 SOURCES & CITATIONS:\n"
+        formatted_response += "="*60 + "\n"
+        for i, citation in enumerate(citations, 1):
+            title = citation.get("title", "Source")
+            url = citation.get("url", "")
+            formatted_response += f"{i}. {title}\n   {url}\n\n"
+    
+    # Add metadata
+    formatted_response += "\n" + "="*60 + "\n"
+    formatted_response += "📊 RESPONSE METADATA:\n"
+    formatted_response += "="*60 + "\n"
+    formatted_response += f"Model: {task_result.get('model_name', 'N/A')}\n"
+    formatted_response += f"Input Tokens: {task_result.get('input_tokens', 0):,}\n"
+    formatted_response += f"Output Tokens: {task_result.get('output_tokens', 0):,}\n"
+    formatted_response += f"Web Search: {'Yes' if task_result.get('web_search') else 'No'}\n"
+    formatted_response += f"AI Provider Cost: ${task_result.get('money_spent', 0):.6f}\n"
+    formatted_response += f"DataForSEO Cost: ${task.get('cost', 0):.6f}\n"
+    formatted_response += f"Total Cost: ${task.get('cost', 0):.6f}\n"
+    formatted_response += f"Generated: {task_result.get('datetime', 'N/A')}\n"
+    formatted_response += "="*60 + "\n"
+    
+    return {
+        "response": formatted_response,
+        "answer": answer_text,
+        "citations": citations,
+        "model_name": task_result.get("model_name"),
+        "input_tokens": task_result.get("input_tokens"),
+        "output_tokens": task_result.get("output_tokens"),
+        "web_search_used": task_result.get("web_search"),
+        "ai_provider_cost": task_result.get("money_spent"),
+        "dataforseo_cost": task.get("cost"),
+        "total_cost": task.get("cost"),
+        "datetime": task_result.get("datetime"),
+        "full_response": task_result
+    }
+
+
 # ============================================================================
 # MODEL LISTINGS (4 tools - FREE)
 # ============================================================================
@@ -195,7 +250,7 @@ async def perplexity_models() -> dict:
 
 
 # ============================================================================
-# LLM LIVE RESPONSES (4 tools) - WEB SEARCH ENABLED
+# LLM LIVE RESPONSES (4 tools) - WITH EMBEDDED CITATIONS
 # ============================================================================
 
 @mcp.tool()
@@ -205,17 +260,14 @@ async def chatgpt_live(
     web_search: bool = True
 ) -> dict:
     """
-    Get live ChatGPT response with web search enabled for citations.
+    Get live ChatGPT response with citations and metadata embedded.
     
-    Args:
-        user_prompt: Question in any language
-        model_name: Model to use (default: gpt-5-2025-08-07)
-        web_search: Enable web search for citations (default: True)
-    
-    Returns answer with citations, tokens, and cost data.
-    
-    Note: Web search is enabled by default to provide citations.
-    The AI will automatically respond in the language of the question.
+    Returns a formatted response with:
+    - Answer text
+    - Citations with titles and URLs
+    - Token counts
+    - Cost breakdown
+    - All metadata
     """
     logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
@@ -234,31 +286,7 @@ async def chatgpt_live(
     if result.get("tasks") and len(result["tasks"]) > 0:
         task = result["tasks"][0]
         task_result = task.get("result", [{}])[0]
-        items = task_result.get("items", [])
-        
-        answer_text = ""
-        citations = []
-        
-        if items:
-            item = items[0]
-            if item.get("sections"):
-                answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            if item.get("annotations"):
-                citations = item.get("annotations", [])
-        
-        return {
-            "answer": answer_text,
-            "citations": citations,
-            "model_name": task_result.get("model_name"),
-            "input_tokens": task_result.get("input_tokens"),
-            "output_tokens": task_result.get("output_tokens"),
-            "web_search_used": task_result.get("web_search"),
-            "ai_provider_cost": task_result.get("money_spent"),
-            "dataforseo_cost": task.get("cost"),
-            "total_cost": task.get("cost"),
-            "datetime": task_result.get("datetime"),
-            "full_response": task_result
-        }
+        return format_llm_response(task_result, task)
     
     return result
 
@@ -270,14 +298,7 @@ async def claude_live(
     web_search: bool = True
 ) -> dict:
     """
-    Get live Claude response with web search enabled for citations.
-    
-    Args:
-        user_prompt: Question in any language
-        model_name: Model to use (default: claude-sonnet-4-20250514)
-        web_search: Enable web search for citations (default: True)
-    
-    Returns answer with citations, tokens, and cost data.
+    Get live Claude response with citations and metadata embedded.
     """
     logger.info(f"Claude: '{user_prompt[:50]}...'")
     
@@ -296,31 +317,7 @@ async def claude_live(
     if result.get("tasks") and len(result["tasks"]) > 0:
         task = result["tasks"][0]
         task_result = task.get("result", [{}])[0]
-        items = task_result.get("items", [])
-        
-        answer_text = ""
-        citations = []
-        
-        if items:
-            item = items[0]
-            if item.get("sections"):
-                answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            if item.get("annotations"):
-                citations = item.get("annotations", [])
-        
-        return {
-            "answer": answer_text,
-            "citations": citations,
-            "model_name": task_result.get("model_name"),
-            "input_tokens": task_result.get("input_tokens"),
-            "output_tokens": task_result.get("output_tokens"),
-            "web_search_used": task_result.get("web_search"),
-            "ai_provider_cost": task_result.get("money_spent"),
-            "dataforseo_cost": task.get("cost"),
-            "total_cost": task.get("cost"),
-            "datetime": task_result.get("datetime"),
-            "full_response": task_result
-        }
+        return format_llm_response(task_result, task)
     
     return result
 
@@ -332,14 +329,7 @@ async def gemini_live(
     web_search: bool = True
 ) -> dict:
     """
-    Get live Gemini response with web search enabled for citations.
-    
-    Args:
-        user_prompt: Question in any language
-        model_name: Model to use (default: gemini-2.5-pro)
-        web_search: Enable web search for citations (default: True)
-    
-    Returns answer with citations, tokens, and cost data.
+    Get live Gemini response with citations and metadata embedded.
     """
     logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
@@ -358,31 +348,7 @@ async def gemini_live(
     if result.get("tasks") and len(result["tasks"]) > 0:
         task = result["tasks"][0]
         task_result = task.get("result", [{}])[0]
-        items = task_result.get("items", [])
-        
-        answer_text = ""
-        citations = []
-        
-        if items:
-            item = items[0]
-            if item.get("sections"):
-                answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            if item.get("annotations"):
-                citations = item.get("annotations", [])
-        
-        return {
-            "answer": answer_text,
-            "citations": citations,
-            "model_name": task_result.get("model_name"),
-            "input_tokens": task_result.get("input_tokens"),
-            "output_tokens": task_result.get("output_tokens"),
-            "web_search_used": task_result.get("web_search"),
-            "ai_provider_cost": task_result.get("money_spent"),
-            "dataforseo_cost": task.get("cost"),
-            "total_cost": task.get("cost"),
-            "datetime": task_result.get("datetime"),
-            "full_response": task_result
-        }
+        return format_llm_response(task_result, task)
     
     return result
 
@@ -393,15 +359,7 @@ async def perplexity_live(
     model_name: str = "sonar-reasoning-pro"
 ) -> dict:
     """
-    Get live Perplexity response (always includes citations by default).
-    
-    Args:
-        user_prompt: Question in any language
-        model_name: Model to use (default: sonar-reasoning-pro)
-    
-    Returns answer with citations, tokens, and cost data.
-    
-    Note: Perplexity doesn't support web_search parameter - always searches web.
+    Get live Perplexity response with citations and metadata embedded.
     """
     logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
@@ -419,37 +377,13 @@ async def perplexity_live(
     if result.get("tasks") and len(result["tasks"]) > 0:
         task = result["tasks"][0]
         task_result = task.get("result", [{}])[0]
-        items = task_result.get("items", [])
-        
-        answer_text = ""
-        citations = []
-        
-        if items:
-            item = items[0]
-            if item.get("sections"):
-                answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            if item.get("annotations"):
-                citations = item.get("annotations", [])
-        
-        return {
-            "answer": answer_text,
-            "citations": citations,
-            "model_name": task_result.get("model_name"),
-            "input_tokens": task_result.get("input_tokens"),
-            "output_tokens": task_result.get("output_tokens"),
-            "web_search_used": task_result.get("web_search"),
-            "ai_provider_cost": task_result.get("money_spent"),
-            "dataforseo_cost": task.get("cost"),
-            "total_cost": task.get("cost"),
-            "datetime": task_result.get("datetime"),
-            "full_response": task_result
-        }
+        return format_llm_response(task_result, task)
     
     return result
 
 
 # ============================================================================
-# AI KEYWORD DATA (1 tool) - WITH LANGUAGE/LOCATION
+# AI KEYWORD DATA (1 tool)
 # ============================================================================
 
 @mcp.tool()
@@ -458,16 +392,7 @@ async def ai_keyword_volume(
     language_name: str = "English",
     location_name: str = "United States"
 ) -> dict:
-    """
-    Get AI search volume for keywords.
-    
-    Args:
-        keywords: List of keywords to check
-        language_name: Language (English, Spanish, French, German, Hindi, etc.)
-        location_name: Location (United States, India, United Kingdom, etc.)
-    
-    Returns keyword metrics across all LLMs for specified region/language.
-    """
+    """Get AI search volume for keywords."""
     logger.info(f"AI keyword volume for {len(keywords)} keywords")
     
     payload = [{
@@ -498,7 +423,7 @@ async def ai_keyword_volume(
 
 
 # ============================================================================
-# LLM MENTIONS (6 tools) - WITH LANGUAGE/LOCATION
+# LLM MENTIONS (6 tools)
 # ============================================================================
 
 @mcp.tool()
@@ -507,16 +432,7 @@ async def search_mentions(
     language_name: str = "English",
     location_name: str = "United States"
 ) -> dict:
-    """
-    Search for brand/keyword mentions across all LLMs.
-    
-    Args:
-        target: Brand name, keyword, or domain
-        language_name: Language for search context
-        location_name: Location for search context
-    
-    Requires LLM Mentions API activation.
-    """
+    """Search for brand/keyword mentions across all LLMs."""
     logger.info(f"Searching mentions: {target}")
     
     payload = [{
@@ -553,7 +469,7 @@ async def top_domains(
     language_name: str = "English",
     location_name: str = "United States"
 ) -> dict:
-    """Get top domains mentioned by LLMs for a keyword."""
+    """Get top domains mentioned by LLMs."""
     logger.info(f"Top domains for: {target}")
     
     payload = [{
@@ -686,28 +602,12 @@ if __name__ == "__main__":
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
     logger.info("Features:")
-    logger.info("  - Web search enabled by default for citations")
-    logger.info("  - Language/location customizable")
-    logger.info("  - Multi-language support (AI auto-adapts)")
+    logger.info("  ✅ Citations embedded in response")
+    logger.info("  ✅ Full metadata displayed (tokens, costs)")
+    logger.info("  ✅ Web search enabled by default")
+    logger.info("  ✅ Multi-language support")
     logger.info("")
-    logger.info("Model Listings (4 tools):")
-    logger.info("   chatgpt_models (33), claude_models (14)")
-    logger.info("   gemini_models (16), perplexity_models (4)")
-    logger.info("")
-    logger.info("LLM Live Responses (4 tools):")
-    logger.info("   chatgpt_live (gpt-5-2025-08-07)")
-    logger.info("   claude_live (claude-sonnet-4-20250514)")
-    logger.info("   gemini_live (gemini-2.5-pro)")
-    logger.info("   perplexity_live (sonar-reasoning-pro)")
-    logger.info("")
-    logger.info("AI Keyword Data (1 tool):")
-    logger.info("   ai_keyword_volume")
-    logger.info("")
-    logger.info("LLM Mentions (6 tools):")
-    logger.info("   search_mentions, top_domains, top_pages")
-    logger.info("   aggregated_metrics, cross_aggregated_metrics")
-    logger.info("")
-    logger.info("Total: 15 tools | 67 models | Multi-language")
+    logger.info("Total: 15 tools | 67 models")
     logger.info("=" * 80)
     
     mcp.run()
