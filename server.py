@@ -1,6 +1,6 @@
 """
 DataForSEO AI Optimization MCP Server - PRODUCTION
-Clean response format: Answer → Citations → Metadata
+Tool names: chatgpt_llm_response, claude_llm_response, etc.
 """
 
 import os
@@ -109,7 +109,7 @@ async def make_request(
 
 
 def format_llm_response(task_result: dict, task: dict) -> dict:
-    """Format LLM response: Answer → Citations → Metadata"""
+    """Minimal format: Answer → Citations → Metadata"""
     items = task_result.get("items", [])
     
     answer_text = ""
@@ -122,33 +122,20 @@ def format_llm_response(task_result: dict, task: dict) -> dict:
         if item.get("annotations"):
             citations = item.get("annotations", [])
     
-    # Build formatted response
+    # Minimal formatting
     formatted_response = answer_text
     
-    # Add citations section
+    # Simple citations
     if citations:
-        formatted_response += "\n\n" + "-" * 70
-        formatted_response += "\nCITATIONS:"
-        formatted_response += "\n" + "-" * 70 + "\n"
+        formatted_response += "\n\n------\nCitations:\n"
         for i, citation in enumerate(citations, 1):
-            title = citation.get("title", "Source")
-            url = citation.get("url", "")
-            formatted_response += f"\n[{i}] {title}\n    {url}\n"
+            formatted_response += f"{i}. {citation.get('title', 'Source')}\n   {citation.get('url', '')}\n"
     
-    # Add metadata section
-    formatted_response += "\n" + "-" * 70
-    formatted_response += "\nRESPONSE METADATA:"
-    formatted_response += "\n" + "-" * 70 + "\n"
-    formatted_response += f"Model: {task_result.get('model_name', 'N/A')}\n"
-    formatted_response += f"Input Tokens: {task_result.get('input_tokens', 0):,}\n"
-    formatted_response += f"Output Tokens: {task_result.get('output_tokens', 0):,}\n"
-    formatted_response += f"Total Tokens: {(task_result.get('input_tokens', 0) + task_result.get('output_tokens', 0)):,}\n"
-    formatted_response += f"Web Search: {'Yes' if task_result.get('web_search') else 'No'}\n"
-    formatted_response += f"AI Cost: ${task_result.get('money_spent', 0):.6f}\n"
-    formatted_response += f"DataForSEO Cost: ${task.get('cost', 0):.6f}\n"
-    formatted_response += f"Total Cost: ${task.get('cost', 0):.6f}\n"
-    formatted_response += f"Generated: {task_result.get('datetime', 'N/A')}\n"
-    formatted_response += "-" * 70
+    # Simple metadata
+    formatted_response += "\n----\nRESPONSE METADATA:\n"
+    formatted_response += f"Model: {task_result.get('model_name')}\n"
+    formatted_response += f"Tokens: {task_result.get('input_tokens', 0):,} in / {task_result.get('output_tokens', 0):,} out\n"
+    formatted_response += f"Cost: ${task.get('cost', 0):.6f}\n"
     
     return {
         "response": formatted_response,
@@ -251,16 +238,23 @@ async def perplexity_models() -> dict:
 
 
 # ============================================================================
-# LLM LIVE RESPONSES (4 tools)
+# LLM LIVE RESPONSES (4 tools) - RENAMED
 # ============================================================================
 
 @mcp.tool()
-async def chatgpt_live(
+async def chatgpt_llm_response(
     user_prompt: str,
     model_name: str = "gpt-5-2025-08-07",
     web_search: bool = True
 ) -> dict:
-    """Get live ChatGPT response with citations."""
+    """
+    Get ChatGPT LLM response with citations and metadata.
+    
+    Args:
+        user_prompt: Your question
+        model_name: Model (default: gpt-5-2025-08-07)
+        web_search: Enable web search for citations (default: True)
+    """
     logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
     payload = [{
@@ -284,12 +278,19 @@ async def chatgpt_live(
 
 
 @mcp.tool()
-async def claude_live(
+async def claude_llm_response(
     user_prompt: str,
     model_name: str = "claude-sonnet-4-20250514",
     web_search: bool = True
 ) -> dict:
-    """Get live Claude response with citations."""
+    """
+    Get Claude LLM response with citations and metadata.
+    
+    Args:
+        user_prompt: Your question
+        model_name: Model (default: claude-sonnet-4-20250514)
+        web_search: Enable web search for citations (default: True)
+    """
     logger.info(f"Claude: '{user_prompt[:50]}...'")
     
     payload = [{
@@ -313,12 +314,19 @@ async def claude_live(
 
 
 @mcp.tool()
-async def gemini_live(
+async def gemini_llm_response(
     user_prompt: str,
     model_name: str = "gemini-2.5-pro",
     web_search: bool = True
 ) -> dict:
-    """Get live Gemini response with citations."""
+    """
+    Get Gemini LLM response with citations and metadata.
+    
+    Args:
+        user_prompt: Your question
+        model_name: Model (default: gemini-2.5-pro)
+        web_search: Enable web search for citations (default: True)
+    """
     logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
     payload = [{
@@ -342,11 +350,19 @@ async def gemini_live(
 
 
 @mcp.tool()
-async def perplexity_live(
+async def perplexity_llm_response(
     user_prompt: str,
     model_name: str = "sonar-reasoning-pro"
 ) -> dict:
-    """Get live Perplexity response with citations."""
+    """
+    Get Perplexity LLM response with citations and metadata.
+    
+    Args:
+        user_prompt: Your question
+        model_name: Model (default: sonar-reasoning-pro)
+    
+    Note: Perplexity doesn't support web_search parameter.
+    """
     logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
     payload = [{
@@ -587,7 +603,11 @@ if __name__ == "__main__":
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
-    logger.info("Total: 15 tools | 67 models | Clean format")
+    logger.info("LLM Response Tools (4):")
+    logger.info("   chatgpt_llm_response, claude_llm_response")
+    logger.info("   gemini_llm_response, perplexity_llm_response")
+    logger.info("")
+    logger.info("Total: 15 tools | 67 models | Minimal format")
     logger.info("=" * 80)
     
     mcp.run()
