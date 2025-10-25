@@ -1,13 +1,12 @@
 """
-DataForSEO AI Optimization MCP Server - FINAL VERIFIED VERSION
-15 tools with complete response data and verified endpoints
+DataForSEO AI Optimization MCP Server - FINAL
+Latest models: GPT-5, Claude 4, Gemini 2.5 Pro, Sonar Reasoning Pro
 """
 
 import os
 import base64
 import logging
 from typing import Optional, Literal
-from datetime import datetime
 
 import httpx
 from dotenv import load_dotenv
@@ -110,12 +109,12 @@ async def make_request(
 
 
 # ============================================================================
-# MODEL LISTINGS (4 tools - FREE, GET requests)
+# MODEL LISTINGS (4 tools - FREE)
 # ============================================================================
 
 @mcp.tool()
 async def chatgpt_models() -> dict:
-    """Get list of available ChatGPT models with pricing and details."""
+    """Get list of available ChatGPT models."""
     result = await make_request(
         "/v3/ai_optimization/chat_gpt/llm_responses/models",
         method="GET"
@@ -135,7 +134,7 @@ async def chatgpt_models() -> dict:
 
 @mcp.tool()
 async def claude_models() -> dict:
-    """Get list of available Claude models with pricing and details."""
+    """Get list of available Claude models."""
     result = await make_request(
         "/v3/ai_optimization/claude/llm_responses/models",
         method="GET"
@@ -155,7 +154,7 @@ async def claude_models() -> dict:
 
 @mcp.tool()
 async def gemini_models() -> dict:
-    """Get list of available Gemini models with pricing and details."""
+    """Get list of available Gemini models."""
     result = await make_request(
         "/v3/ai_optimization/gemini/llm_responses/models",
         method="GET"
@@ -175,7 +174,7 @@ async def gemini_models() -> dict:
 
 @mcp.tool()
 async def perplexity_models() -> dict:
-    """Get list of available Perplexity models with pricing and details."""
+    """Get list of available Perplexity models."""
     result = await make_request(
         "/v3/ai_optimization/perplexity/llm_responses/models",
         method="GET"
@@ -194,43 +193,29 @@ async def perplexity_models() -> dict:
 
 
 # ============================================================================
-# LLM LIVE RESPONSES (4 tools) - FULL DATA
+# LLM LIVE RESPONSES (4 tools) - LATEST MODELS
 # ============================================================================
 
 @mcp.tool()
 async def chatgpt_live(
     user_prompt: str,
-    model_name: str = "gpt-4o-mini",
-    max_output_tokens: int = 1000,
-    temperature: float = 0.7,
-    web_search: bool = False
+    model_name: str = "gpt-5-2025-08-07"
 ) -> dict:
     """
-    Get live ChatGPT response with complete metadata.
+    Get live ChatGPT response.
     
-    Use chatgpt_models() first to see all available models.
+    Args:
+        user_prompt: Your question
+        model_name: Model to use (default: gpt-5-2025-08-07)
+                   Use chatgpt_models() to see all 33 available models
     
-    Returns:
-        - answer: The AI response text
-        - citations: List of sources with titles and URLs
-        - model_name: Model used
-        - input_tokens: Tokens in prompt
-        - output_tokens: Tokens in response
-        - web_search_used: Whether web search was enabled
-        - ai_provider_cost: Cost charged by OpenAI
-        - dataforseo_cost: Cost charged by DataForSEO
-        - total_cost: Total cost (dataforseo_cost)
-        - datetime: When response was generated
-        - full_response: Complete raw API response
+    Returns complete response with answer, citations, tokens, and cost.
     """
     logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name,
-        "max_output_tokens": max_output_tokens,
-        "temperature": temperature,
-        "web_search": web_search
+        "model_name": model_name
     }]
     
     result = await make_request(
@@ -274,26 +259,23 @@ async def chatgpt_live(
 @mcp.tool()
 async def claude_live(
     user_prompt: str,
-    model_name: str = "claude-3-5-haiku-20241022",
-    max_output_tokens: int = 1000,
-    temperature: float = 0.7,
-    web_search: bool = False
+    model_name: str = "claude-sonnet-4-20250514"
 ) -> dict:
     """
-    Get live Claude response with complete metadata.
+    Get live Claude response.
     
-    Use claude_models() first to see all available models.
+    Args:
+        user_prompt: Your question
+        model_name: Model to use (default: claude-sonnet-4-20250514)
+                   Use claude_models() to see all 14 available models
     
-    Returns complete metadata including tokens, costs, citations, and full response.
+    Returns complete response with answer, citations, tokens, and cost.
     """
     logger.info(f"Claude: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name,
-        "max_output_tokens": max_output_tokens,
-        "temperature": temperature,
-        "web_search": web_search
+        "model_name": model_name
     }]
     
     result = await make_request(
@@ -337,26 +319,23 @@ async def claude_live(
 @mcp.tool()
 async def gemini_live(
     user_prompt: str,
-    model_name: str = "gemini-1.5-flash",
-    max_output_tokens: int = 1000,
-    temperature: float = 0.7,
-    web_search: bool = False
+    model_name: str = "gemini-2.5-pro"
 ) -> dict:
     """
-    Get live Gemini response with complete metadata.
+    Get live Gemini response.
     
-    Use gemini_models() first to see all available models.
+    Args:
+        user_prompt: Your question
+        model_name: Model to use (default: gemini-2.5-pro)
+                   Use gemini_models() to see all 16 available models
     
-    Returns complete metadata including tokens, costs, citations, and full response.
+    Returns complete response with answer, citations, tokens, and cost.
     """
     logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name,
-        "max_output_tokens": max_output_tokens,
-        "temperature": temperature,
-        "web_search": web_search
+        "model_name": model_name
     }]
     
     result = await make_request(
@@ -400,25 +379,23 @@ async def gemini_live(
 @mcp.tool()
 async def perplexity_live(
     user_prompt: str,
-    model_name: str = "sonar",
-    max_output_tokens: int = 1000,
-    temperature: float = 0.7
+    model_name: str = "sonar-reasoning-pro"
 ) -> dict:
     """
-    Get live Perplexity response with complete metadata.
+    Get live Perplexity response.
     
-    Use perplexity_models() first to see all available models.
-    Note: Perplexity doesn't support web_search parameter.
+    Args:
+        user_prompt: Your question
+        model_name: Model to use (default: sonar-reasoning-pro)
+                   Use perplexity_models() to see all 4 available models
     
-    Returns complete metadata including tokens, costs, citations, and full response.
+    Returns complete response with answer, citations, tokens, and cost.
     """
     logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name,
-        "max_output_tokens": max_output_tokens,
-        "temperature": temperature
+        "model_name": model_name
     }]
     
     result = await make_request(
@@ -464,23 +441,11 @@ async def perplexity_live(
 # ============================================================================
 
 @mcp.tool()
-async def ai_keyword_volume(
-    keywords: list[str],
-    language_name: str = "English",
-    location_name: str = "United States"
-) -> dict:
-    """
-    Get AI search volume for keywords across all LLMs.
-    
-    Returns keyword metrics including search volume, impressions, etc.
-    """
+async def ai_keyword_volume(keywords: list[str]) -> dict:
+    """Get AI search volume for keywords."""
     logger.info(f"AI keyword volume for {len(keywords)} keywords")
     
-    payload = [{
-        "keywords": keywords,
-        "language_name": language_name,
-        "location_name": location_name
-    }]
+    payload = [{"keywords": keywords}]
     
     result = await make_request(
         "/v3/ai_optimization/ai_keyword_data/keywords_search_volume/live",
@@ -506,23 +471,11 @@ async def ai_keyword_volume(
 # ============================================================================
 
 @mcp.tool()
-async def search_mentions(
-    target: str,
-    language_name: str = "English",
-    location_name: str = "United States"
-) -> dict:
-    """
-    Search for brand/keyword mentions across all LLMs.
-    
-    Requires LLM Mentions API activation. Contact support@dataforseo.com
-    """
+async def search_mentions(target: str) -> dict:
+    """Search for brand/keyword mentions across all LLMs."""
     logger.info(f"Searching mentions: {target}")
     
-    payload = [{
-        "target": target,
-        "language_name": language_name,
-        "location_name": location_name
-    }]
+    payload = [{"target": target}]
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/search/live",
@@ -545,23 +498,11 @@ async def search_mentions(
 
 
 @mcp.tool()
-async def top_domains(
-    target: str,
-    language_name: str = "English",
-    location_name: str = "United States"
-) -> dict:
-    """
-    Get top domains mentioned by LLMs for a keyword (competitor analysis).
-    
-    Requires LLM Mentions API activation.
-    """
+async def top_domains(target: str) -> dict:
+    """Get top domains mentioned by LLMs for a keyword."""
     logger.info(f"Top domains for: {target}")
     
-    payload = [{
-        "target": target,
-        "language_name": language_name,
-        "location_name": location_name
-    }]
+    payload = [{"target": target}]
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/top_domains/live",
@@ -584,19 +525,11 @@ async def top_domains(
 
 
 @mcp.tool()
-async def top_pages(
-    target: str
-) -> dict:
-    """
-    Get top-performing pages from a domain in LLM responses.
-    
-    Requires LLM Mentions API activation.
-    """
+async def top_pages(target: str) -> dict:
+    """Get top-performing pages from a domain."""
     logger.info(f"Top pages: {target}")
     
-    payload = [{
-        "target": target
-    }]
+    payload = [{"target": target}]
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/top_pages/live",
@@ -621,26 +554,15 @@ async def top_pages(
 @mcp.tool()
 async def aggregated_metrics(
     target: str,
-    target_type: Literal["domain", "page"] = "domain",
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None
+    target_type: Literal["domain", "page"] = "domain"
 ) -> dict:
-    """
-    Get historical metrics for a domain or page.
-    
-    Requires LLM Mentions API activation.
-    """
+    """Get historical metrics for a domain or page."""
     logger.info(f"Aggregated metrics: {target}")
     
     payload = [{
         "target": target,
         "target_type": target_type
     }]
-    
-    if date_from:
-        payload[0]["date_from"] = date_from
-    if date_to:
-        payload[0]["date_to"] = date_to
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/aggregated_metrics/live",
@@ -666,11 +588,7 @@ async def cross_aggregated_metrics(
     targets: list[str],
     target_type: Literal["domain", "page"] = "domain"
 ) -> dict:
-    """
-    Compare multiple domains/pages side-by-side.
-    
-    Requires LLM Mentions API activation.
-    """
+    """Compare multiple domains/pages side-by-side."""
     logger.info(f"Comparing {len(targets)} targets")
     
     payload = [{
@@ -703,24 +621,28 @@ async def cross_aggregated_metrics(
 
 if __name__ == "__main__":
     logger.info("=" * 80)
-    logger.info("DataForSEO AI Optimization MCP Server - COMPLETE")
+    logger.info("DataForSEO AI Optimization MCP Server - FINAL")
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
-    logger.info("Model Listings (4 tools - FREE):")
-    logger.info("   chatgpt_models, claude_models, gemini_models, perplexity_models")
+    logger.info("Model Listings (4 tools):")
+    logger.info("   chatgpt_models (33), claude_models (14)")
+    logger.info("   gemini_models (16), perplexity_models (4)")
     logger.info("")
-    logger.info("LLM Live Responses (4 tools - FULL DATA):")
-    logger.info("   chatgpt_live, claude_live, gemini_live, perplexity_live")
+    logger.info("LLM Live Responses (4 tools) - LATEST:")
+    logger.info("   chatgpt_live (gpt-5-2025-08-07)")
+    logger.info("   claude_live (claude-sonnet-4-20250514)")
+    logger.info("   gemini_live (gemini-2.5-pro)")
+    logger.info("   perplexity_live (sonar-reasoning-pro)")
     logger.info("")
     logger.info("AI Keyword Data (1 tool):")
     logger.info("   ai_keyword_volume")
     logger.info("")
-    logger.info("LLM Mentions (6 tools - requires activation):")
+    logger.info("LLM Mentions (6 tools):")
     logger.info("   search_mentions, top_domains, top_pages")
     logger.info("   aggregated_metrics, cross_aggregated_metrics")
     logger.info("")
-    logger.info("Total: 15 tools")
+    logger.info("Total: 15 tools | 67 models supported")
     logger.info("=" * 80)
     
     mcp.run()
