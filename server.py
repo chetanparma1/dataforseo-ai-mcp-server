@@ -1,11 +1,6 @@
 """
-DataForSEO AI Optimization MCP Server - LEAN VERSION
-11 essential tools with CORRECTED parameters
-
-Fixed: "target" parameter for LLM Mentions (not "keyword")
-4 LLM live endpoints
-1 AI Keyword Data endpoint
-6 LLM Mentions endpoints
+DataForSEO AI Optimization MCP Server - FINAL VERIFIED VERSION
+15 tools with complete response data and verified endpoints
 """
 
 import os
@@ -21,17 +16,7 @@ from fastmcp import FastMCP
 # Load environment variables
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# Initialize FastMCP server
-mcp = FastMCP("DataForSEO AI Optimization")
-
-# DataForSEO API Configuration
+# Get credentials
 DATAFORSEO_LOGIN = os.getenv("DATAFORSEO_LOGIN")
 DATAFORSEO_PASSWORD = os.getenv("DATAFORSEO_PASSWORD")
 BASE_URL = "https://api.dataforseo.com"
@@ -44,7 +29,17 @@ credentials = f"{DATAFORSEO_LOGIN}:{DATAFORSEO_PASSWORD}"
 encoded_credentials = base64.b64encode(credentials.encode()).decode()
 AUTH_HEADER = {"Authorization": f"Basic {encoded_credentials}"}
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 logger.info("DataForSEO credentials loaded")
+
+# Initialize FastMCP server
+mcp = FastMCP("DataForSEO AI Optimization")
 
 
 class DataForSEOError(Exception):
@@ -114,28 +109,119 @@ async def make_request(
             raise DataForSEOError(f"Request failed: {str(e)}")
 
 
-# ================================================================================
-# LLM LIVE RESPONSES (4 tools)
-# ================================================================================
+# ============================================================================
+# MODEL LISTINGS (4 tools - FREE, GET requests)
+# ============================================================================
 
 @mcp.tool()
-async def llm_response_chatgpt(
+async def chatgpt_models() -> dict:
+    """Get list of available ChatGPT models with pricing and details."""
+    result = await make_request(
+        "/v3/ai_optimization/chat_gpt/llm_responses/models",
+        method="GET"
+    )
+    
+    if result.get("tasks") and len(result["tasks"]) > 0:
+        task = result["tasks"][0]
+        models = task.get("result", [])
+        
+        return {
+            "models": models,
+            "total_count": len(models)
+        }
+    
+    return result
+
+
+@mcp.tool()
+async def claude_models() -> dict:
+    """Get list of available Claude models with pricing and details."""
+    result = await make_request(
+        "/v3/ai_optimization/claude/llm_responses/models",
+        method="GET"
+    )
+    
+    if result.get("tasks") and len(result["tasks"]) > 0:
+        task = result["tasks"][0]
+        models = task.get("result", [])
+        
+        return {
+            "models": models,
+            "total_count": len(models)
+        }
+    
+    return result
+
+
+@mcp.tool()
+async def gemini_models() -> dict:
+    """Get list of available Gemini models with pricing and details."""
+    result = await make_request(
+        "/v3/ai_optimization/gemini/llm_responses/models",
+        method="GET"
+    )
+    
+    if result.get("tasks") and len(result["tasks"]) > 0:
+        task = result["tasks"][0]
+        models = task.get("result", [])
+        
+        return {
+            "models": models,
+            "total_count": len(models)
+        }
+    
+    return result
+
+
+@mcp.tool()
+async def perplexity_models() -> dict:
+    """Get list of available Perplexity models with pricing and details."""
+    result = await make_request(
+        "/v3/ai_optimization/perplexity/llm_responses/models",
+        method="GET"
+    )
+    
+    if result.get("tasks") and len(result["tasks"]) > 0:
+        task = result["tasks"][0]
+        models = task.get("result", [])
+        
+        return {
+            "models": models,
+            "total_count": len(models)
+        }
+    
+    return result
+
+
+# ============================================================================
+# LLM LIVE RESPONSES (4 tools) - FULL DATA
+# ============================================================================
+
+@mcp.tool()
+async def chatgpt_live(
     user_prompt: str,
     model_name: str = "gpt-4o-mini",
     max_output_tokens: int = 1000,
-    temperature: float = 0.7
+    temperature: float = 0.7,
+    web_search: bool = False
 ) -> dict:
     """
-    Get live ChatGPT response with citations.
+    Get live ChatGPT response with complete metadata.
     
-    Args:
-        user_prompt: Your question or prompt
-        model_name: gpt-4o-mini (cheapest), gpt-4o, gpt-4-turbo
-        max_output_tokens: Max response length (100-4000)
-        temperature: Creativity level (0.0-1.0)
+    Use chatgpt_models() first to see all available models.
     
     Returns:
-        ChatGPT's answer with citations and cost
+        - answer: The AI response text
+        - citations: List of sources with titles and URLs
+        - model_name: Model used
+        - input_tokens: Tokens in prompt
+        - output_tokens: Tokens in response
+        - web_search_used: Whether web search was enabled
+        - ai_provider_cost: Cost charged by OpenAI
+        - dataforseo_cost: Cost charged by DataForSEO
+        - total_cost: Total cost (dataforseo_cost)
+        - datetime: When response was generated
+        - full_response: Complete raw API response
     """
     logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
@@ -143,7 +229,8 @@ async def llm_response_chatgpt(
         "user_prompt": user_prompt,
         "model_name": model_name,
         "max_output_tokens": max_output_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -157,40 +244,47 @@ async def llm_response_chatgpt(
         task_result = task.get("result", [{}])[0]
         items = task_result.get("items", [])
         
+        answer_text = ""
+        citations = []
+        
         if items:
             item = items[0]
-            answer_text = ""
             if item.get("sections"):
                 answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            
-            return {
-                "answer": answer_text,
-                "citations": item.get("citations", []),
-                "model": model_name,
-                "cost": task.get("cost", 0)
-            }
+            if item.get("annotations"):
+                citations = item.get("annotations", [])
+        
+        return {
+            "answer": answer_text,
+            "citations": citations,
+            "model_name": task_result.get("model_name"),
+            "input_tokens": task_result.get("input_tokens"),
+            "output_tokens": task_result.get("output_tokens"),
+            "web_search_used": task_result.get("web_search"),
+            "ai_provider_cost": task_result.get("money_spent"),
+            "dataforseo_cost": task.get("cost"),
+            "total_cost": task.get("cost"),
+            "datetime": task_result.get("datetime"),
+            "full_response": task_result
+        }
     
     return result
 
 
 @mcp.tool()
-async def llm_response_claude(
+async def claude_live(
     user_prompt: str,
     model_name: str = "claude-3-5-haiku-20241022",
     max_output_tokens: int = 1000,
-    temperature: float = 0.7
+    temperature: float = 0.7,
+    web_search: bool = False
 ) -> dict:
     """
-    Get live Claude response with citations.
+    Get live Claude response with complete metadata.
     
-    Args:
-        user_prompt: Your question or prompt
-        model_name: claude-3-5-haiku-20241022, claude-3-5-sonnet-20241022
-        max_output_tokens: Max response length (100-4000)
-        temperature: Creativity level (0.0-1.0)
+    Use claude_models() first to see all available models.
     
-    Returns:
-        Claude's answer with citations and cost
+    Returns complete metadata including tokens, costs, citations, and full response.
     """
     logger.info(f"Claude: '{user_prompt[:50]}...'")
     
@@ -198,7 +292,8 @@ async def llm_response_claude(
         "user_prompt": user_prompt,
         "model_name": model_name,
         "max_output_tokens": max_output_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -212,40 +307,47 @@ async def llm_response_claude(
         task_result = task.get("result", [{}])[0]
         items = task_result.get("items", [])
         
+        answer_text = ""
+        citations = []
+        
         if items:
             item = items[0]
-            answer_text = ""
             if item.get("sections"):
                 answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            
-            return {
-                "answer": answer_text,
-                "citations": item.get("citations", []),
-                "model": model_name,
-                "cost": task.get("cost", 0)
-            }
+            if item.get("annotations"):
+                citations = item.get("annotations", [])
+        
+        return {
+            "answer": answer_text,
+            "citations": citations,
+            "model_name": task_result.get("model_name"),
+            "input_tokens": task_result.get("input_tokens"),
+            "output_tokens": task_result.get("output_tokens"),
+            "web_search_used": task_result.get("web_search"),
+            "ai_provider_cost": task_result.get("money_spent"),
+            "dataforseo_cost": task.get("cost"),
+            "total_cost": task.get("cost"),
+            "datetime": task_result.get("datetime"),
+            "full_response": task_result
+        }
     
     return result
 
 
 @mcp.tool()
-async def llm_response_gemini(
+async def gemini_live(
     user_prompt: str,
     model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1000,
-    temperature: float = 0.7
+    temperature: float = 0.7,
+    web_search: bool = False
 ) -> dict:
     """
-    Get live Gemini response with citations.
+    Get live Gemini response with complete metadata.
     
-    Args:
-        user_prompt: Your question or prompt
-        model_name: gemini-1.5-flash, gemini-1.5-pro, gemini-2.5-flash
-        max_output_tokens: Max response length (100-4000)
-        temperature: Creativity level (0.0-1.0)
+    Use gemini_models() first to see all available models.
     
-    Returns:
-        Gemini's answer with citations and cost
+    Returns complete metadata including tokens, costs, citations, and full response.
     """
     logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
@@ -253,7 +355,8 @@ async def llm_response_gemini(
         "user_prompt": user_prompt,
         "model_name": model_name,
         "max_output_tokens": max_output_tokens,
-        "temperature": temperature
+        "temperature": temperature,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -267,40 +370,47 @@ async def llm_response_gemini(
         task_result = task.get("result", [{}])[0]
         items = task_result.get("items", [])
         
+        answer_text = ""
+        citations = []
+        
         if items:
             item = items[0]
-            answer_text = ""
             if item.get("sections"):
                 answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            
-            return {
-                "answer": answer_text,
-                "citations": item.get("citations", []),
-                "model": model_name,
-                "cost": task.get("cost", 0)
-            }
+            if item.get("annotations"):
+                citations = item.get("annotations", [])
+        
+        return {
+            "answer": answer_text,
+            "citations": citations,
+            "model_name": task_result.get("model_name"),
+            "input_tokens": task_result.get("input_tokens"),
+            "output_tokens": task_result.get("output_tokens"),
+            "web_search_used": task_result.get("web_search"),
+            "ai_provider_cost": task_result.get("money_spent"),
+            "dataforseo_cost": task.get("cost"),
+            "total_cost": task.get("cost"),
+            "datetime": task_result.get("datetime"),
+            "full_response": task_result
+        }
     
     return result
 
 
 @mcp.tool()
-async def llm_response_perplexity(
+async def perplexity_live(
     user_prompt: str,
     model_name: str = "sonar",
     max_output_tokens: int = 1000,
     temperature: float = 0.7
 ) -> dict:
     """
-    Get live Perplexity response with citations.
+    Get live Perplexity response with complete metadata.
     
-    Args:
-        user_prompt: Your question or prompt
-        model_name: sonar, sonar-pro
-        max_output_tokens: Max response length (100-4000)
-        temperature: Creativity level (0.0-1.0)
+    Use perplexity_models() first to see all available models.
+    Note: Perplexity doesn't support web_search parameter.
     
-    Returns:
-        Perplexity's answer with citations and cost
+    Returns complete metadata including tokens, costs, citations, and full response.
     """
     logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
@@ -322,25 +432,36 @@ async def llm_response_perplexity(
         task_result = task.get("result", [{}])[0]
         items = task_result.get("items", [])
         
+        answer_text = ""
+        citations = []
+        
         if items:
             item = items[0]
-            answer_text = ""
             if item.get("sections"):
                 answer_text = " ".join([s.get("text", "") for s in item["sections"]])
-            
-            return {
-                "answer": answer_text,
-                "citations": item.get("citations", []),
-                "model": model_name,
-                "cost": task.get("cost", 0)
-            }
+            if item.get("annotations"):
+                citations = item.get("annotations", [])
+        
+        return {
+            "answer": answer_text,
+            "citations": citations,
+            "model_name": task_result.get("model_name"),
+            "input_tokens": task_result.get("input_tokens"),
+            "output_tokens": task_result.get("output_tokens"),
+            "web_search_used": task_result.get("web_search"),
+            "ai_provider_cost": task_result.get("money_spent"),
+            "dataforseo_cost": task.get("cost"),
+            "total_cost": task.get("cost"),
+            "datetime": task_result.get("datetime"),
+            "full_response": task_result
+        }
     
     return result
 
 
-# ================================================================================
+# ============================================================================
 # AI KEYWORD DATA (1 tool)
-# ================================================================================
+# ============================================================================
 
 @mcp.tool()
 async def ai_keyword_volume(
@@ -349,15 +470,9 @@ async def ai_keyword_volume(
     location_name: str = "United States"
 ) -> dict:
     """
-    Get AI search volume for keywords.
+    Get AI search volume for keywords across all LLMs.
     
-    Args:
-        keywords: List of keywords to check
-        language_name: Search language
-        location_name: Geographic location
-    
-    Returns:
-        Search volume data for each keyword in AI searches
+    Returns keyword metrics including search volume, impressions, etc.
     """
     logger.info(f"AI keyword volume for {len(keywords)} keywords")
     
@@ -386,9 +501,9 @@ async def ai_keyword_volume(
     return result
 
 
-# ================================================================================
-# LLM MENTIONS (6 tools - requires activation)
-# ================================================================================
+# ============================================================================
+# LLM MENTIONS (6 tools - Requires activation)
+# ============================================================================
 
 @mcp.tool()
 async def search_mentions(
@@ -399,15 +514,7 @@ async def search_mentions(
     """
     Search for brand/keyword mentions across all LLMs.
     
-    Requires LLM Mentions API access
-    
-    Args:
-        target: Brand name, keyword, or domain to search
-        language_name: Search language
-        location_name: Geographic location
-    
-    Returns:
-        List of mentions across ChatGPT, Claude, Gemini, Perplexity
+    Requires LLM Mentions API activation. Contact support@dataforseo.com
     """
     logger.info(f"Searching mentions: {target}")
     
@@ -446,15 +553,7 @@ async def top_domains(
     """
     Get top domains mentioned by LLMs for a keyword (competitor analysis).
     
-    Requires LLM Mentions API access
-    
-    Args:
-        target: Keyword or topic to analyze
-        language_name: Search language
-        location_name: Geographic location
-    
-    Returns:
-        List of top domains mentioned by LLMs
+    Requires LLM Mentions API activation.
     """
     logger.info(f"Top domains for: {target}")
     
@@ -491,13 +590,7 @@ async def top_pages(
     """
     Get top-performing pages from a domain in LLM responses.
     
-    Requires LLM Mentions API access
-    
-    Args:
-        target: Domain (e.g., "semrush.com")
-    
-    Returns:
-        List of top pages mentioned by LLMs
+    Requires LLM Mentions API activation.
     """
     logger.info(f"Top pages: {target}")
     
@@ -535,16 +628,7 @@ async def aggregated_metrics(
     """
     Get historical metrics for a domain or page.
     
-    Requires LLM Mentions API access
-    
-    Args:
-        target: Domain (e.g., "semrush.com") or page URL
-        target_type: "domain" or "page"
-        date_from: Start date (YYYY-MM-DD)
-        date_to: End date (YYYY-MM-DD)
-    
-    Returns:
-        Historical metrics showing trends over time
+    Requires LLM Mentions API activation.
     """
     logger.info(f"Aggregated metrics: {target}")
     
@@ -585,14 +669,7 @@ async def cross_aggregated_metrics(
     """
     Compare multiple domains/pages side-by-side.
     
-    Requires LLM Mentions API access
-    
-    Args:
-        targets: List of domains or page URLs to compare
-        target_type: "domain" or "page"
-    
-    Returns:
-        Comparative metrics for all targets
+    Requires LLM Mentions API activation.
     """
     logger.info(f"Comparing {len(targets)} targets")
     
@@ -620,27 +697,30 @@ async def cross_aggregated_metrics(
     return result
 
 
-# ================================================================================
+# ============================================================================
 # SERVER STARTUP
-# ================================================================================
+# ============================================================================
 
 if __name__ == "__main__":
     logger.info("=" * 80)
-    logger.info("DataForSEO AI Optimization MCP Server")
+    logger.info("DataForSEO AI Optimization MCP Server - COMPLETE")
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
-    logger.info("LLM Live Responses (4 tools):")
-    logger.info("  llm_response_chatgpt, llm_response_claude, llm_response_gemini, llm_response_perplexity")
+    logger.info("Model Listings (4 tools - FREE):")
+    logger.info("   chatgpt_models, claude_models, gemini_models, perplexity_models")
+    logger.info("")
+    logger.info("LLM Live Responses (4 tools - FULL DATA):")
+    logger.info("   chatgpt_live, claude_live, gemini_live, perplexity_live")
     logger.info("")
     logger.info("AI Keyword Data (1 tool):")
-    logger.info("  ai_keyword_volume")
+    logger.info("   ai_keyword_volume")
     logger.info("")
     logger.info("LLM Mentions (6 tools - requires activation):")
-    logger.info("  search_mentions, top_domains, top_pages")
-    logger.info("  aggregated_metrics, cross_aggregated_metrics")
+    logger.info("   search_mentions, top_domains, top_pages")
+    logger.info("   aggregated_metrics, cross_aggregated_metrics")
     logger.info("")
-    logger.info("Total: 11 tools")
+    logger.info("Total: 15 tools")
     logger.info("=" * 80)
     
     mcp.run()
