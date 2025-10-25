@@ -1,6 +1,8 @@
 """
-DataForSEO AI Optimization MCP Server - FINAL
-Latest models: GPT-5, Claude 4, Gemini 2.5 Pro, Sonar Reasoning Pro
+DataForSEO AI Optimization MCP Server - PRODUCTION READY
+- Web search enabled by default for citations
+- Language and location customizable
+- Latest models: GPT-5, Claude 4, Gemini 2.5 Pro, Sonar Reasoning Pro
 """
 
 import os
@@ -193,29 +195,34 @@ async def perplexity_models() -> dict:
 
 
 # ============================================================================
-# LLM LIVE RESPONSES (4 tools) - LATEST MODELS
+# LLM LIVE RESPONSES (4 tools) - WEB SEARCH ENABLED
 # ============================================================================
 
 @mcp.tool()
 async def chatgpt_live(
     user_prompt: str,
-    model_name: str = "gpt-5-2025-08-07"
+    model_name: str = "gpt-5-2025-08-07",
+    web_search: bool = True
 ) -> dict:
     """
-    Get live ChatGPT response.
+    Get live ChatGPT response with web search enabled for citations.
     
     Args:
-        user_prompt: Your question
+        user_prompt: Question in any language
         model_name: Model to use (default: gpt-5-2025-08-07)
-                   Use chatgpt_models() to see all 33 available models
+        web_search: Enable web search for citations (default: True)
     
-    Returns complete response with answer, citations, tokens, and cost.
+    Returns answer with citations, tokens, and cost data.
+    
+    Note: Web search is enabled by default to provide citations.
+    The AI will automatically respond in the language of the question.
     """
     logger.info(f"ChatGPT: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name
+        "model_name": model_name,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -259,23 +266,25 @@ async def chatgpt_live(
 @mcp.tool()
 async def claude_live(
     user_prompt: str,
-    model_name: str = "claude-sonnet-4-20250514"
+    model_name: str = "claude-sonnet-4-20250514",
+    web_search: bool = True
 ) -> dict:
     """
-    Get live Claude response.
+    Get live Claude response with web search enabled for citations.
     
     Args:
-        user_prompt: Your question
+        user_prompt: Question in any language
         model_name: Model to use (default: claude-sonnet-4-20250514)
-                   Use claude_models() to see all 14 available models
+        web_search: Enable web search for citations (default: True)
     
-    Returns complete response with answer, citations, tokens, and cost.
+    Returns answer with citations, tokens, and cost data.
     """
     logger.info(f"Claude: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name
+        "model_name": model_name,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -319,23 +328,25 @@ async def claude_live(
 @mcp.tool()
 async def gemini_live(
     user_prompt: str,
-    model_name: str = "gemini-2.5-pro"
+    model_name: str = "gemini-2.5-pro",
+    web_search: bool = True
 ) -> dict:
     """
-    Get live Gemini response.
+    Get live Gemini response with web search enabled for citations.
     
     Args:
-        user_prompt: Your question
+        user_prompt: Question in any language
         model_name: Model to use (default: gemini-2.5-pro)
-                   Use gemini_models() to see all 16 available models
+        web_search: Enable web search for citations (default: True)
     
-    Returns complete response with answer, citations, tokens, and cost.
+    Returns answer with citations, tokens, and cost data.
     """
     logger.info(f"Gemini: '{user_prompt[:50]}...'")
     
     payload = [{
         "user_prompt": user_prompt,
-        "model_name": model_name
+        "model_name": model_name,
+        "web_search": web_search
     }]
     
     result = await make_request(
@@ -382,14 +393,15 @@ async def perplexity_live(
     model_name: str = "sonar-reasoning-pro"
 ) -> dict:
     """
-    Get live Perplexity response.
+    Get live Perplexity response (always includes citations by default).
     
     Args:
-        user_prompt: Your question
+        user_prompt: Question in any language
         model_name: Model to use (default: sonar-reasoning-pro)
-                   Use perplexity_models() to see all 4 available models
     
-    Returns complete response with answer, citations, tokens, and cost.
+    Returns answer with citations, tokens, and cost data.
+    
+    Note: Perplexity doesn't support web_search parameter - always searches web.
     """
     logger.info(f"Perplexity: '{user_prompt[:50]}...'")
     
@@ -437,15 +449,32 @@ async def perplexity_live(
 
 
 # ============================================================================
-# AI KEYWORD DATA (1 tool)
+# AI KEYWORD DATA (1 tool) - WITH LANGUAGE/LOCATION
 # ============================================================================
 
 @mcp.tool()
-async def ai_keyword_volume(keywords: list[str]) -> dict:
-    """Get AI search volume for keywords."""
+async def ai_keyword_volume(
+    keywords: list[str],
+    language_name: str = "English",
+    location_name: str = "United States"
+) -> dict:
+    """
+    Get AI search volume for keywords.
+    
+    Args:
+        keywords: List of keywords to check
+        language_name: Language (English, Spanish, French, German, Hindi, etc.)
+        location_name: Location (United States, India, United Kingdom, etc.)
+    
+    Returns keyword metrics across all LLMs for specified region/language.
+    """
     logger.info(f"AI keyword volume for {len(keywords)} keywords")
     
-    payload = [{"keywords": keywords}]
+    payload = [{
+        "keywords": keywords,
+        "language_name": language_name,
+        "location_name": location_name
+    }]
     
     result = await make_request(
         "/v3/ai_optimization/ai_keyword_data/keywords_search_volume/live",
@@ -459,6 +488,8 @@ async def ai_keyword_volume(keywords: list[str]) -> dict:
         
         return {
             "keywords": keywords,
+            "language": language_name,
+            "location": location_name,
             "items": task_result.get("items", []),
             "cost": task.get("cost", 0)
         }
@@ -467,15 +498,32 @@ async def ai_keyword_volume(keywords: list[str]) -> dict:
 
 
 # ============================================================================
-# LLM MENTIONS (6 tools - Requires activation)
+# LLM MENTIONS (6 tools) - WITH LANGUAGE/LOCATION
 # ============================================================================
 
 @mcp.tool()
-async def search_mentions(target: str) -> dict:
-    """Search for brand/keyword mentions across all LLMs."""
+async def search_mentions(
+    target: str,
+    language_name: str = "English",
+    location_name: str = "United States"
+) -> dict:
+    """
+    Search for brand/keyword mentions across all LLMs.
+    
+    Args:
+        target: Brand name, keyword, or domain
+        language_name: Language for search context
+        location_name: Location for search context
+    
+    Requires LLM Mentions API activation.
+    """
     logger.info(f"Searching mentions: {target}")
     
-    payload = [{"target": target}]
+    payload = [{
+        "target": target,
+        "language_name": language_name,
+        "location_name": location_name
+    }]
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/search/live",
@@ -489,6 +537,8 @@ async def search_mentions(target: str) -> dict:
         
         return {
             "target": target,
+            "language": language_name,
+            "location": location_name,
             "total_mentions": task_result.get("total_count", 0),
             "items": task_result.get("items", []),
             "cost": task.get("cost", 0)
@@ -498,11 +548,19 @@ async def search_mentions(target: str) -> dict:
 
 
 @mcp.tool()
-async def top_domains(target: str) -> dict:
+async def top_domains(
+    target: str,
+    language_name: str = "English",
+    location_name: str = "United States"
+) -> dict:
     """Get top domains mentioned by LLMs for a keyword."""
     logger.info(f"Top domains for: {target}")
     
-    payload = [{"target": target}]
+    payload = [{
+        "target": target,
+        "language_name": language_name,
+        "location_name": location_name
+    }]
     
     result = await make_request(
         "/v3/ai_optimization/llm_mentions/top_domains/live",
@@ -516,6 +574,8 @@ async def top_domains(target: str) -> dict:
         
         return {
             "target": target,
+            "language": language_name,
+            "location": location_name,
             "total_count": task_result.get("total_count", 0),
             "domains": task_result.get("items", []),
             "cost": task.get("cost", 0)
@@ -621,15 +681,20 @@ async def cross_aggregated_metrics(
 
 if __name__ == "__main__":
     logger.info("=" * 80)
-    logger.info("DataForSEO AI Optimization MCP Server - FINAL")
+    logger.info("DataForSEO AI Optimization MCP Server - PRODUCTION")
     logger.info("=" * 80)
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
+    logger.info("")
+    logger.info("Features:")
+    logger.info("  - Web search enabled by default for citations")
+    logger.info("  - Language/location customizable")
+    logger.info("  - Multi-language support (AI auto-adapts)")
     logger.info("")
     logger.info("Model Listings (4 tools):")
     logger.info("   chatgpt_models (33), claude_models (14)")
     logger.info("   gemini_models (16), perplexity_models (4)")
     logger.info("")
-    logger.info("LLM Live Responses (4 tools) - LATEST:")
+    logger.info("LLM Live Responses (4 tools):")
     logger.info("   chatgpt_live (gpt-5-2025-08-07)")
     logger.info("   claude_live (claude-sonnet-4-20250514)")
     logger.info("   gemini_live (gemini-2.5-pro)")
@@ -642,7 +707,7 @@ if __name__ == "__main__":
     logger.info("   search_mentions, top_domains, top_pages")
     logger.info("   aggregated_metrics, cross_aggregated_metrics")
     logger.info("")
-    logger.info("Total: 15 tools | 67 models supported")
+    logger.info("Total: 15 tools | 67 models | Multi-language")
     logger.info("=" * 80)
     
     mcp.run()
