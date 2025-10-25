@@ -119,7 +119,7 @@ async def make_request(
 # ================================================================================
 
 @mcp.tool()
-async def chatgpt_live(
+async def llm_response_chatgpt(
     user_prompt: str,
     model_name: str = "gpt-4o-mini",
     max_output_tokens: int = 1000,
@@ -174,7 +174,7 @@ async def chatgpt_live(
 
 
 @mcp.tool()
-async def claude_live(
+async def llm_response_claude(
     user_prompt: str,
     model_name: str = "claude-3-5-haiku-20241022",
     max_output_tokens: int = 1000,
@@ -229,7 +229,7 @@ async def claude_live(
 
 
 @mcp.tool()
-async def gemini_live(
+async def llm_response_gemini(
     user_prompt: str,
     model_name: str = "gemini-1.5-flash",
     max_output_tokens: int = 1000,
@@ -284,7 +284,7 @@ async def gemini_live(
 
 
 @mcp.tool()
-async def perplexity_live(
+async def llm_response_perplexity(
     user_prompt: str,
     model_name: str = "sonar",
     max_output_tokens: int = 1000,
@@ -631,7 +631,7 @@ if __name__ == "__main__":
     logger.info(f"Account: {DATAFORSEO_LOGIN}")
     logger.info("")
     logger.info("LLM Live Responses (4 tools):")
-    logger.info("  chatgpt_live, claude_live, gemini_live, perplexity_live")
+    logger.info("  llm_response_chatgpt, llm_response_claude, llm_response_gemini, llm_response_perplexity")
     logger.info("")
     logger.info("AI Keyword Data (1 tool):")
     logger.info("  ai_keyword_volume")
